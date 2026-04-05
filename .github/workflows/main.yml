@@ -1,0 +1,27 @@
+name: Forwarder Disa Nonstop
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Agar tombol 'Run' muncul manual
+  schedule:
+    - cron: '0 */6 * * *' # Otomatis jalan ulang tiap 6 jam
+
+jobs:
+  run-forwarder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install telethon
+          
+      - name: Running Script
+        run: python main.py
