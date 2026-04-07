@@ -21,23 +21,14 @@ def proses_teks_dhisa(teks):
     teks = re.sub(r'https?://\S+', '', teks)
     teks = re.sub(r't\.me/\S+', '', teks)
     teks = re.sub(r'@\S+', '', teks)
-    kamus = {
-        "New TV Show Added!": "Series Update",
-        "New Movie Added!": "Movie Update",
-        "New Episode Released": "Episode Baru Tersedia",
-        "Download Via": "silakan Request ke Bunda"
-    }
-    for lama, baru in kamus.items():
-        teks = re.sub(re.escape(lama), baru, teks, flags=re.IGNORECASE)
     return teks.strip() + "\n\n\nby Dhisa @nontonbarengFM"
 
 async def main():
-    print("--- DHISA: SIMPLE TOPIC BUTTON MODE --- 🎀")
+    print("--- DHISA: IMAGE + BUTTON MODE --- 🎀")
     try:
         await client.connect()
         if not await client.is_user_authorized(): return
         
-        # DEFINISI TOMBOL
         markup = [Button.url("Channel Utama 💎", "https://t.me/nontonbarengFM")]
         
         last_id = 0
@@ -54,20 +45,18 @@ async def main():
                 continue
             
             try:
-                caption_baru = proses_teks_dhisa(msg.text) if msg.text else "Update Film Baru 🎬"
+                caption_baru = proses_teks_dhisa(msg.text) if msg.text else "Update Gambar Baru 🖼️"
                 
-                # --- CARA PALING STANDAR & AMAN ---
-                await client.send_message(
-                    TUJUAN, 
-                    caption_baru, 
-                    file=msg.media, 
-                    reply_to=REPLY_KE, # Langsung tunjuk ID Topiknya
-                    buttons=markup
-                )
+                # --- CARA AGAR TOMBOL PASTI MUNCUL ---
+                # 1. Kirim Gambarnya saja dulu ke Topik
+                sent_msg = await client.send_file(TUJUAN, msg.media, reply_to=REPLY_KE)
+                
+                # 2. Kirim Teks dan Tombol sebagai pesan baru (Reply ke gambar tadi)
+                await client.send_message(TUJUAN, caption_baru, reply_to=sent_msg.id, buttons=markup)
                 
                 last_id = msg.id
                 with open("last_id.txt", "w") as f: f.write(str(last_id))
-                print(f"✅ Berhasil Kirim ID: {msg.id}")
+                print(f"✅ Gambar Berhasil Dikirim dengan Tombol: {msg.id}")
                 await asyncio.sleep(4) 
             except Exception as e:
                 print(f"⚠️ Gagal di ID {msg.id}: {e}")
