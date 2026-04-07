@@ -4,7 +4,7 @@ import re
 from telethon import TelegramClient, events, Button
 from telethon.sessions import StringSession
 
-# --- MENGAMBIL DATA DARI GITHUB SECRETS ---
+# --- DATA DARI GITHUB SECRETS ---
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
 RAW_SESSION = os.environ.get("SESSION_STRING")
@@ -32,12 +32,14 @@ def proses_teks_dhisa(teks):
     return teks.strip() + "\n\n\nby Dhisa si-Cantik @nontonbarengFM"
 
 async def main():
-    print("--- DHISA FORWARDER: FIX MODE --- 🎀")
+    print("--- DHISA FORWARDER: BUTTON FIX --- 🎀")
     try:
         await client.connect()
         if not await client.is_user_authorized(): return
         
+        # DEFINISI TOMBOL
         markup = [Button.url("Channel Utama 💎", "https://t.me/nontonbarengFM")]
+        
         last_id = 0
         if os.path.exists("last_id.txt"):
             with open("last_id.txt", "r") as f:
@@ -46,8 +48,6 @@ async def main():
 
         async for msg in client.iter_messages(SUMBER, min_id=last_id, limit=None, reverse=True):
             if msg.action: continue
-            
-            # --- FILTER KHUSUS MEDIA ---
             if not msg.media:
                 last_id = msg.id
                 with open("last_id.txt", "w") as f: f.write(str(last_id))
@@ -56,7 +56,7 @@ async def main():
             try:
                 caption_baru = proses_teks_dhisa(msg.text) if msg.text else "by Dhisa si-Cantik @nontonbarengFM"
                 
-                # --- PERBAIKAN DI SINI (Tanpa kata 'message=') ---
+                # MENGIRIM DENGAN TOMBOL
                 await client.send_message(TUJUAN, caption_baru, file=msg.media, reply_to=REPLY_KE, buttons=markup)
                 
                 last_id = msg.id
@@ -67,7 +67,7 @@ async def main():
                 print(f"⚠️ Gagal di ID {msg.id}: {e}")
                 if "Wait" in str(e): await asyncio.sleep(60)
                 
-    except Exception as e: print(f"❌ Error Utama: {e}")
+    except Exception as e: print(f"❌ Error: {e}")
 
 if __name__ == '__main__':
     with client:
