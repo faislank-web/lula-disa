@@ -1,7 +1,7 @@
 import asyncio
 import os
 import re
-from telethon import TelegramClient, events, Button, types
+from telethon import TelegramClient, events, Button
 from telethon.sessions import StringSession
 
 # --- DATA DARI GITHUB SECRETS ---
@@ -32,7 +32,7 @@ def proses_teks_dhisa(teks):
     return teks.strip() + "\n\n\nby Dhisa @nontonbarengFM"
 
 async def main():
-    print("--- DHISA: FIX TOPIC BUTTON MODE --- 🎀")
+    print("--- DHISA: SIMPLE TOPIC BUTTON MODE --- 🎀")
     try:
         await client.connect()
         if not await client.is_user_authorized(): return
@@ -56,12 +56,12 @@ async def main():
             try:
                 caption_baru = proses_teks_dhisa(msg.text) if msg.text else "Update Film Baru 🎬"
                 
-                # --- PERBAIKAN UTAMA: CARA REPLY KE TOPIK AGAR TOMBOL MUNCUL ---
-                await client.send_file(
+                # --- CARA PALING STANDAR & AMAN ---
+                await client.send_message(
                     TUJUAN, 
-                    msg.media, 
-                    caption=caption_baru, 
-                    reply_to=types.InputReplyToMessage(reply_to_msg_id=REPLY_KE, top_msg_id=REPLY_KE),
+                    caption_baru, 
+                    file=msg.media, 
+                    reply_to=REPLY_KE, # Langsung tunjuk ID Topiknya
                     buttons=markup
                 )
                 
