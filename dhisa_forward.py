@@ -4,7 +4,7 @@ import re
 from telethon import TelegramClient, events, Button
 from telethon.sessions import StringSession
 
-# --- MENGAMBIL DATA DARI GITHUB SECRETS (AMAN & GRATIS) ---
+# --- MENGAMBIL DATA DARI GITHUB SECRETS ---
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
 RAW_SESSION = os.environ.get("SESSION_STRING")
@@ -17,13 +17,10 @@ client = TelegramClient(StringSession(RAW_SESSION.strip()), API_ID, API_HASH, se
 
 def proses_teks_dhisa(teks):
     if not teks: return ""
-    # 1. Hapus Markdown
     teks = re.sub(r'[*_`~\[\]]', '', teks)
-    # 2. Hapus total link/username
     teks = re.sub(r'https?://\S+', '', teks)
     teks = re.sub(r't\.me/\S+', '', teks)
     teks = re.sub(r'@\S+', '', teks)
-    # 3. Ganti Kata Request Bunda
     kamus = {
         "New TV Show Added!": "Series Update",
         "New Movie Added!": "Movie Update",
@@ -32,16 +29,13 @@ def proses_teks_dhisa(teks):
     }
     for lama, baru in kamus.items():
         teks = re.sub(re.escape(lama), baru, teks, flags=re.IGNORECASE)
-    # 4. Tambah Footer
     return teks.strip() + "\n\n\nby Dhisa si-Cantik @nontonbarengFM"
 
 async def main():
-    print("--- DHISA FORWARDER: SECRETS MODE --- 🎀")
+    print("--- DHISA FORWARDER: FIX MODE --- 🎀")
     try:
         await client.connect()
-        if not await client.is_user_authorized(): 
-            print("❌ Login Gagal!")
-            return
+        if not await client.is_user_authorized(): return
         
         markup = [Button.url("Channel Utama 💎", "https://t.me/nontonbarengFM")]
         last_id = 0
@@ -51,9 +45,9 @@ async def main():
                 if c: last_id = int(c)
 
         async for msg in client.iter_messages(SUMBER, min_id=last_id, limit=None, reverse=True):
-            if msg.action: continue 
+            if msg.action: continue
             
-            # --- FILTER HANYA MEDIA ---
+            # --- FILTER KHUSUS MEDIA ---
             if not msg.media:
                 last_id = msg.id
                 with open("last_id.txt", "w") as f: f.write(str(last_id))
@@ -61,16 +55,19 @@ async def main():
             
             try:
                 caption_baru = proses_teks_dhisa(msg.text) if msg.text else "by Dhisa si-Cantik @nontonbarengFM"
-                await client.send_message(TUJUAN, msg, message=caption_baru, reply_to=REPLY_KE, buttons=markup)
+                
+                # --- PERBAIKAN DI SINI (Tanpa kata 'message=') ---
+                await client.send_message(TUJUAN, caption_baru, file=msg.media, reply_to=REPLY_KE, buttons=markup)
                 
                 last_id = msg.id
                 with open("last_id.txt", "w") as f: f.write(str(last_id))
-                print(f"✅ Forwarded: {msg.id}")
-                await asyncio.sleep(2.5) 
+                print(f"✅ Berhasil Kirim ID: {msg.id}")
+                await asyncio.sleep(3) 
             except Exception as e:
-                print(f"⚠️ Error ID {msg.id}: {e}")
+                print(f"⚠️ Gagal di ID {msg.id}: {e}")
                 if "Wait" in str(e): await asyncio.sleep(60)
-    except Exception as e: print(f"❌ Error: {e}")
+                
+    except Exception as e: print(f"❌ Error Utama: {e}")
 
 if __name__ == '__main__':
     with client:
