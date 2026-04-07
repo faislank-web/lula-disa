@@ -1,7 +1,7 @@
 import asyncio
 import os
 import re
-from telethon import TelegramClient, events, Button
+from telethon import TelegramClient, events, Button, types
 from telethon.sessions import StringSession
 
 # --- DATA DARI GITHUB SECRETS ---
@@ -11,7 +11,7 @@ RAW_SESSION = os.environ.get("SESSION_STRING")
 
 SUMBER = -1002186281759
 TUJUAN = -1003473467525
-REPLY_KE = 5318
+REPLY_KE = 5318 
 
 client = TelegramClient(StringSession(RAW_SESSION.strip()), API_ID, API_HASH, sequential_updates=True)
 
@@ -25,14 +25,14 @@ def proses_teks_dhisa(teks):
         "New TV Show Added!": "Series Update",
         "New Movie Added!": "Movie Update",
         "New Episode Released": "Episode Baru Tersedia",
-        "Download Via": "silakan Request ke Bunda si-Cantik"
+        "Download Via": "silakan Request ke Bunda"
     }
     for lama, baru in kamus.items():
         teks = re.sub(re.escape(lama), baru, teks, flags=re.IGNORECASE)
-    return teks.strip() + "\n\n\nby Dhisa si-Cantik @nontonbarengFM"
+    return teks.strip() + "\n\n\nby Dhisa @nontonbarengFM"
 
 async def main():
-    print("--- DHISA FORWARDER: BUTTON FIX --- 🎀")
+    print("--- DHISA: FIX TOPIC BUTTON MODE --- 🎀")
     try:
         await client.connect()
         if not await client.is_user_authorized(): return
@@ -47,25 +47,30 @@ async def main():
                 if c: last_id = int(c)
 
         async for msg in client.iter_messages(SUMBER, min_id=last_id, limit=None, reverse=True):
-            if msg.action: continue
-            if not msg.media:
-                last_id = msg.id
-                with open("last_id.txt", "w") as f: f.write(str(last_id))
+            if msg.action or not msg.media:
+                if msg.id > last_id:
+                    last_id = msg.id
+                    with open("last_id.txt", "w") as f: f.write(str(last_id))
                 continue
             
             try:
-                caption_baru = proses_teks_dhisa(msg.text) if msg.text else "by Dhisa si-Cantik @nontonbarengFM"
+                caption_baru = proses_teks_dhisa(msg.text) if msg.text else "Update Film Baru 🎬"
                 
-                # MENGIRIM DENGAN TOMBOL
-                await client.send_message(TUJUAN, caption_baru, file=msg.media, reply_to=REPLY_KE, buttons=markup)
+                # --- PERBAIKAN UTAMA: CARA REPLY KE TOPIK AGAR TOMBOL MUNCUL ---
+                await client.send_file(
+                    TUJUAN, 
+                    msg.media, 
+                    caption=caption_baru, 
+                    reply_to=types.InputReplyToMessage(reply_to_msg_id=REPLY_KE, top_msg_id=REPLY_KE),
+                    buttons=markup
+                )
                 
                 last_id = msg.id
                 with open("last_id.txt", "w") as f: f.write(str(last_id))
                 print(f"✅ Berhasil Kirim ID: {msg.id}")
-                await asyncio.sleep(3) 
+                await asyncio.sleep(4) 
             except Exception as e:
                 print(f"⚠️ Gagal di ID {msg.id}: {e}")
-                if "Wait" in str(e): await asyncio.sleep(60)
                 
     except Exception as e: print(f"❌ Error: {e}")
 
