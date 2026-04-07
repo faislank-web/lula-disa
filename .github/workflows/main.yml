@@ -1,27 +1,33 @@
-name: Forwarder Disa Nonstop
+name: Dhisa Forwarder System
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: # Agar tombol 'Run' muncul manual
   schedule:
-    - cron: '0 */6 * * *' # Otomatis jalan ulang tiap 6 jam
+    - cron: '0 */6 * * *' # Jalan otomatis setiap 6 jam
+  workflow_dispatch:      # Tombol manual "Run Workflow"
 
 jobs:
-  run-forwarder:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
-          pip install telethon
-          
-      - name: Running Script
-        run: python main.py
+          pip install telethon pytz
+
+      - name: Run Dhisa Forwarder
+        run: python dhisa_forward.py
+
+      - name: Simpan Progres (Update Last ID)
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add last_id.txt
+          git commit -m "Dhisa Update: Progres Terakhir [skip ci]" || echo "Tidak ada perubahan"
+          git push
