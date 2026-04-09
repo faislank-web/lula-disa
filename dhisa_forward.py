@@ -10,8 +10,7 @@ API_HASH = os.environ.get("API_HASH")
 RAW_SESSION = os.environ.get("SESSION_STRING")
 
 SUMBER = -1002186281759
-TUJUAN = -1003473467525
-REPLY_KE = 5318 
+TUJUAN = -1002981455085  # Target ID Baru
 
 client = TelegramClient(StringSession(RAW_SESSION.strip()), API_ID, API_HASH, sequential_updates=True)
 
@@ -32,7 +31,7 @@ def proses_teks_dhisa(teks):
     return teks.strip() + "\n\n\nby Dhisa @nontonbarengFM"
 
 async def main():
-    print("--- DHISA: SIMPLE TOPIC BUTTON MODE --- 🎀")
+    print("--- DHISA: MODE KIRIM LANGSUNG (TANPA TOPIK) --- 🎀")
     try:
         await client.connect()
         if not await client.is_user_authorized(): return
@@ -56,12 +55,11 @@ async def main():
             try:
                 caption_baru = proses_teks_dhisa(msg.text) if msg.text else "Update Film Baru 🎬"
                 
-                # --- CARA PALING STANDAR & AMAN ---
+                # Mengirim tanpa parameter reply_to (masuk ke chat utama)
                 await client.send_message(
                     TUJUAN, 
                     caption_baru, 
                     file=msg.media, 
-                    reply_to=REPLY_KE, # Langsung tunjuk ID Topiknya
                     buttons=markup
                 )
                 
