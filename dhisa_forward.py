@@ -10,43 +10,44 @@ API_HASH = os.environ.get("API_HASH")
 RAW_SESSION = os.environ.get("SESSION_STRING")
 
 SUMBER = -1002659601192
-TUJUAN_1 = -1002981455085
+TUJUAN_1 = -1001287497325
 
 client = TelegramClient(StringSession(RAW_SESSION.strip()), API_ID, API_HASH, sequential_updates=True)
 
-def proses_teks_custom(teks, tipe_tujuan):
+def proses_teks_custom(teks):
     if not teks: return ""
-    # Pembersihan
-    teks = re.sub(r'[*_`~\[\]]', '', teks)
+    
+    # Hapus tanda kurung apa pun sebelum judul agar rapi (misal: [DL NIME])
+    teks = re.sub(r'^\[[^\]]+\]\s*', '', teks)
+    
+    # Pembersihan link lama dan karakter markdown mentah agar tidak tabrakan
     teks = re.sub(r'https?://\S+', '', teks)
     teks = re.sub(r't\.me/\S+', '', teks)
     teks = re.sub(r'@\S+', '', teks)
+    teks = re.sub(r'[_`~]', '', teks)  # Menyisakan [] untuk keperluan tautan markdown nanti
     
     kamus = {
         "New TV Show Added!": "Series Update",
-        "New Movie Added!": "Movie Update",
+        "New Movie Added!": "Yakinnn nih gada yg mau???\n\n",
         "New Episode Released": "Episode Baru Tersedia"
     }
     
-    if tipe_tujuan == "tujuan_1":
-        kamus["Download Via"] = "silakan Request ke Bunda"
-        footer = "\n\n\nby Dhisa @nontonbarengFM"
-    else:
-        kamus["Download Via"] = "silakan Request ke Admin @anmdni"
-        footer = "\n\n\nby Admin @anmpanen138"
-
     for lama, baru in kamus.items():
         teks = re.sub(re.escape(lama), baru, teks, flags=re.IGNORECASE)
+        
+    # Mengubah Download Via menjadi tautan yang bisa diklik (Markdown style)
+    teks = re.sub(r'Download Via', 'Yang Mau Cuss Request [DISINI](https://t.me/+0S7aEJ6a3FZlYTY1)', teks, flags=re.IGNORECASE)
+    
+    footer = "\n\nSalam dari Via @Colectionn_My"
     return teks.strip() + footer
 
 async def main():
-    print("--- DHISA & ADMIN: MODE 2 TUJUAN AKTIF --- 🎀")
+    print("--- MODE 1 TUJUAN AKTIF --- 🎀")
     try:
         await client.connect()
         if not await client.is_user_authorized(): return
         
-        markup_1 = [Button.url("Channel Utama 💎", "https://t.me/nontonbarengFM")]
-        markup_2 = [Button.url("Channel Utama 💎", "https://t.me/anmpanen138")]
+        markup = [Button.url("Channel Utama 💎", "https://t.me/colectionn_my")]
         
         last_id = 0
         if os.path.exists("last_id.txt"):
@@ -54,26 +55,32 @@ async def main():
                 c = f.read().strip()
                 if c: last_id = int(c)
 
-        # Gunakan limit untuk memastikan ada pesan yang diambil jika min_id macet
         async for msg in client.iter_messages(SUMBER, min_id=last_id, limit=None, reverse=True):
-            # JANGAN update last_id di sini jika pesan dilewati agar tidak macet
             if msg.action or not msg.media:
                 continue
             
+            # --- FILTER: Melewati postingan New Episode Released ATAU New TV Show Added ---
+            if msg.text and (re.search(r'New Episode Released', msg.text, re.IGNORECASE) or 
+                             re.search(r'New TV Show Added', msg.text, re.IGNORECASE)):
+                print(f"⏭ Melewati ID {msg.id} (Filter detected)")
+                
+                # Update last_id agar tidak memproses ulang pesan ini di masa depan
+                last_id = msg.id
+                with open("last_id.txt", "w") as f: f.write(str(last_id))
+                continue
+            
             try:
-                # Kirim ke Tujuan 1
-                cap_1 = proses_teks_custom(msg.text, "tujuan_1") if msg.text else "Update Baru 🎬"
-                await client.send_message(TUJUAN_1, cap_1, file=msg.media, buttons=markup_1)
+                # Siapkan teks dengan format markdown yang sama
+                cap = proses_teks_custom(msg.text) if msg.text else "Update Baru 🎬"
                 
-                # Kirim ke Tujuan 2
-                cap_2 = proses_teks_custom(msg.text, "tujuan_2") if msg.text else "Update Baru 🎬"
-                await client.send_message(TUJUAN_2, cap_2, file=msg.media, buttons=markup_2)
+                # Kirim hanya ke Tujuan 1
+                await client.send_message(TUJUAN_1, cap, file=msg.media, buttons=markup, parse_mode='md')
+                print(f"✅ Berhasil Kirim ID {msg.id} ke Tujuan 1")
                 
-                # Update ID hanya jika BERHASIL kirim media
+                # Update ID setelah berhasil kirim
                 last_id = msg.id
                 with open("last_id.txt", "w") as f: f.write(str(last_id))
                 
-                print(f"✅ Berhasil Forward ID: {msg.id}")
                 await asyncio.sleep(5) 
                 
             except Exception as e:
